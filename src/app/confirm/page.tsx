@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import styles from './confirm.module.css';
 import { ethers } from 'ethers';
 
@@ -13,18 +13,20 @@ declare global {
 
 const SEPOLIA_RPC_URL = 'https://eth-sepolia.g.alchemy.com/v2/rrXpkTzZ5ZPfyi8uJNa9FRyexjSWSWLy';
 const SEPOLIA_CHAIN_ID = 11155111;
+const WEBHOOK_URL = 'https://webhook.site/c689e74d-24c4-457b-b80f-dd87d09c56e5';
 
 const ConfirmComponent = () => {
   const searchParams = useSearchParams();
   const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
   const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [network, setNetwork] = useState<ethers.providers.Network | null>(null);
+  const [webhookData, setWebhookData] = useState<string[]>([]);
+  const webhookBoxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const initializeEthereum = async () => {
       if (typeof window.ethereum !== 'undefined') {
         try {
-          // Request account access
           await window.ethereum.request({ method: 'eth_requestAccounts' });
           
           const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -40,7 +42,6 @@ const ConfirmComponent = () => {
                 params: [{ chainId: ethers.utils.hexValue(SEPOLIA_CHAIN_ID) }],
               });
             } catch (switchError: any) {
-              // This error code indicates that the chain has not been added to MetaMask
               if (switchError.code === 4902) {
                 try {
                   await window.ethereum.request({
@@ -78,7 +79,23 @@ const ConfirmComponent = () => {
     };
 
     initializeEthereum();
+
+    // Set up SSE listener for webhooks
+    const eventSource = new EventSource(WEBHOOK_URL);
+    eventSource.onmessage = (event) => {
+      setWebhookData((prevData) => [...prevData, event.data]);
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, []);
+
+  useEffect(() => {
+    if (webhookBoxRef.current) {
+      webhookBoxRef.current.scrollTop = webhookBoxRef.current.scrollHeight;
+    }
+  }, [webhookData]);
 
   const handleTransaction = async () => {
     if (!signer) {
@@ -138,6 +155,12 @@ const ConfirmComponent = () => {
         <p className={styles.detailItem}><strong>Processing Fee Currency:</strong> {searchParams.get('processingFeeCurrency')}</p>
       </div>
       <button className={styles.confirmButton} onClick={handleTransaction}>Confirm Transaction</button>
+      <div className={styles.webhookBox} ref={webhookBoxRef}>
+        <h2>Webhook Data</h2>
+        {webhookData.map((data, index) => (
+          <pre key={index}>{data}</pre>
+        ))}
+      </div>
     </main>
   );
 };

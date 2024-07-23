@@ -44,3 +44,20 @@
     background-color: #005bb5;
   }
   
+  .webhookBox {
+    margin-top: 20px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #f9f9f9;
+  }
+  
+  .webhookBox h2 {
+    margin-top: 0;
+  }
+  
+  .webhookBox pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
