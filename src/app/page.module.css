@@ -41,3 +41,42 @@
 .sellButton:hover {
   background-color: #005bb5;
 }
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 90%;
+  max-width: 400px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.formContainer label {
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.formContainer input,
+.formContainer select {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fafafa;
+  transition: border-color 0.3s ease;
+}
+
+.formContainer input:focus,
+.formContainer select:focus {
+  border-color: #0070f3;
+  outline: none;
+}
