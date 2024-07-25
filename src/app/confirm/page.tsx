@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense, useRef } from 'react';
 import styles from './confirm.module.css';
 import { ethers } from 'ethers';
+import { useWebhook } from './WebhookContext'; // Adjust the path accordingly
 
 declare global {
   interface Window {
@@ -13,15 +14,14 @@ declare global {
 
 const SEPOLIA_RPC_URL = 'https://eth-sepolia.g.alchemy.com/v2/rrXpkTzZ5ZPfyi8uJNa9FRyexjSWSWLy';
 const SEPOLIA_CHAIN_ID = 11155111;
-const WEBHOOK_URL = 'https://webhook.site/c689e74d-24c4-457b-b80f-dd87d09c56e5';
 
 const ConfirmComponent = () => {
   const searchParams = useSearchParams();
   const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
   const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [network, setNetwork] = useState<ethers.providers.Network | null>(null);
-  const [webhookData, setWebhookData] = useState<string[]>([]);
   const webhookBoxRef = useRef<HTMLDivElement>(null);
+  const { webhookData, fetchWebhookData } = useWebhook();
 
   useEffect(() => {
     const initializeEthereum = async () => {
@@ -79,17 +79,18 @@ const ConfirmComponent = () => {
     };
 
     initializeEthereum();
-
-    // Set up SSE listener for webhooks
-    const eventSource = new EventSource(WEBHOOK_URL);
-    eventSource.onmessage = (event) => {
-      setWebhookData((prevData) => [...prevData, event.data]);
-    };
-
-    return () => {
-      eventSource.close();
-    };
   }, []);
+
+  useEffect(() => {
+    const pollWebhookData = async () => {
+      await fetchWebhookData();
+      const intervalId = setInterval(fetchWebhookData, 10000); // Poll every 10 seconds
+
+      return () => clearInterval(intervalId); // Cleanup on unmount
+    };
+
+    pollWebhookData();
+  }, [fetchWebhookData]);
 
   useEffect(() => {
     if (webhookBoxRef.current) {
